@@ -21,3 +21,7 @@ Config.EnableCuffKeys = true -- Enables Handcuff keybinds
 Config.SoftCuffKey = '->'
 
 Config.HardCuffKey = '<-'
+
+Config.Guns = {
+    
+}
