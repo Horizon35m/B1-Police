@@ -27,3 +27,36 @@ RegisterNetEvent('B1-Police:FriskPlayercl', function(id)
         TriggerServerEvent('B1-Police:FriskPlayersv', id)
     end
 end)
+
+RegisterNetEvent('B1-Police:CuffPlayercl', function(id, item, thing)
+    if id == nil then
+        id = lib.getClosestPlayer(GetEntityCoords(PlayerPedId()),2,false)
+        if item == 'cuffs'
+            if thing == 'sc'
+
+            else
+
+            end
+        else
+            if thing == 'sc'
+
+            else
+
+            end
+        end
+    else
+        if item == 'zip'
+            if thing == 'sc'
+
+            else
+
+            end
+        else
+            if thing == 'sc'
+
+            else
+
+            end
+        end
+    end
+end)
