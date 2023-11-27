@@ -8,18 +8,19 @@ version '0.0.1'
 lua54 "yes"
 
 client_scripts {
-    'function_cl.lua',
+    'functions_cl.lua',
     'menu.lua',
     'interaction.lua'
 }
 
 server_scripts {
-    'function_sv.lua',
+    'functions_sv.lua',
 }
 
 shared_scripts {
     'config.lua',
     '@ox_lib/init.lua',
+    '@es_extended/imports.lua'
 }
 
 dependencies {
