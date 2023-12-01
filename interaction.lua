@@ -16,6 +16,18 @@ exports.ox_target:addGlobalPlayer({
       exports.ox_inventory:openInventory('player', target)
     end,
   },
+  {
+    label = "Frisk Person",
+    icon = 'fa-solid fa-hand',
+    groups = 'police',
+    distance = 1.5,
+    onSelect = function(data)
+      local NetworkPlayer = NetworkGetPlayerIndexFromPed(data.entity)
+      local ServerId = GetPlayerServerId(NetworkPlayer)
+      local target = ServerId
+      TriggerServerEvent('B1-Police:FriskPlayersv', target)
+    end,
+  },
 })
 
 -- exports.ox_target:addGlobalVehicle({

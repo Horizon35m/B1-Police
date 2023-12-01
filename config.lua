@@ -2,13 +2,13 @@ Config = {}
 
 Config.DiscordWebHook = ''
 
-Config.EmoteResource = 'scully' -- scully, this is where you set you animation resource
+Config.EmoteResource = 'native' -- native, this is where you set you animation resource ONLY SUPPORTS NATIVE ATM
 
 Config.Notify = 'ox' -- Notify method ox for ox_lib TODO ADD MORE
 
-Config.EnableMenu = true -- Enables PD action menu
+Config.EnableMenu = true -- Enables PD action menu REQUIRES OX_LIB
 
-Config.EnableRadial = true -- Enables Premade radials
+Config.EnableRadial = true -- Enables Premade radials REQUIRES OX_LIB
 
 Config.PDJobs = { -- The jobs that have access to PD functions
     'police',
@@ -24,7 +24,7 @@ Config.SoftCuffKey = '->'
 
 Config.HardCuffKey = '<-'
 
-Config.Guns = {
+Config.Guns = { -- Where you set the items detected by frisk only supports weapons atm.
     "WEAPON_PISTOL_MK2",
     "WEAPON_ASSAULTSMG",
     "WEAPON_MOLOTOV",
