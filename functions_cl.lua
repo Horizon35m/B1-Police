@@ -49,7 +49,7 @@ function LoadDict(dict)
     end
 end
 
-function gettingArrested()
+function gettingArrested(cuffs, id)
     SetCurrentPedWeapon(PlayerPedId(), GetHashKey('WEAPON_UNARMED'), true)
 	Wait(250)
 	if myCount < 4 then
@@ -61,27 +61,48 @@ function gettingArrested()
             isHandcuffed = false
    		else
             myCount = 0
-            imCuffed()
+            Cuffed(cuffs, id)
    		end
    	else
         Wait(3000)
         myCount = 0
-        Cuffed()
+        Cuffed(cuffs, id)
    	end
 end
 
 
-function Cuffed()
+function Cuffed(cuffs, id)
+    if hardCuffed and cuffs == 'zip' then
+        TriggerServerEvent('B1-Police:RemoveItem', id, 'Zipties', 2)
+    elseif not hardCuffed and cuffs == 'zip' then
+        TriggerServerEvent('B1-Police:RemoveItem', id, 'Zipties', 1)
+    elseif hardCuffed and cuffs == 'cuff' then
+        TriggerServerEvent('B1-Police:RemoveItem', id, 'Cuffs', 2)
+    elseif not hardCuffed and cuffs == 'cuff' then
+        TriggerServerEvent('B1-Police:RemoveItem', id, 'Cuffs', 1)
+    end
     local coords = GetEntityCoords(PlayerPedId())
-    local hash = `p_cs_cuffs_02_s`
-    RequestModel(hash)
-    while not HasModelLoaded(hash) do Wait(0) end
-    if hardCuffed then
-        cuffObj = CreateObject(hash,coords,true,false)
-        AttachEntityToEntity(cuffObj, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 60309), -0.055, 0.06, 0.04, 265.0, 155.0, 80.0, true, false, false, false, 0, true)
+    while not HasModelLoaded('hei_prop_zip_tie_positioned') and HasModelLoaded('p_cs_cuffs_02_s') do Wait(0) end
+    if hardCuffed then 
+        if cuffs == 'zip' then
+            object = CreateObject(RequestModel('hei_prop_zip_tie_positioned'),coords,true,false)
+            AttachEntityToEntity(cuffObj, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 60309), -0.055, 0.06, 0.04, 265.0, 155.0, 80.0, true, false, false, false, 0, true)
+        elseif cuffs == 'cuff' then
+            object = CreateObject(RequestModel('p_cs_cuffs_02_s'),coords,true,false)
+            AttachEntityToEntity(cuffObj, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 60309), -0.055, 0.06, 0.04, 265.0, 155.0, 80.0, true, false, false, false, 0, true)
+        else
+            TriggerEvent('B1-Police:Notify', 'Police', 'You should not see this lol', 'error')
+        end
     else
-        cuffObj = CreateObject(hash,coords,true,false)
-        AttachEntityToEntity(cuffObj, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 60309), -0.058, 0.005, 0.090, 290.0, 95.0, 120.0, true, false, false, false, 0, true)
+        if cuffs == 'zip' then
+            object = CreateObject(RequestModel('hei_prop_zip_tie_positioned'),coords,true,false)
+            AttachEntityToEntity(cuffObj, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 60309), -0.055, 0.06, 0.04, 265.0, 155.0, 80.0, true, false, false, false, 0, true)
+        elseif cuffs == 'cuff' then
+            object = CreateObject(RequestModel('p_cs_cuffs_02_s'),coords,true,false)
+            AttachEntityToEntity(cuffObj, PlayerPedId(), GetPedBoneIndex(PlayerPedId(), 60309), -0.055, 0.06, 0.04, 265.0, 155.0, 80.0, true, false, false, false, 0, true)
+        else
+            TriggerEvent('B1-Police:Notify', 'Police', 'You should not see this lol', 'error')
+        end
     end
     LocalPlayer.state:set('invBusy', true, false)
     CreateThread(function()
@@ -165,26 +186,53 @@ end)
 
 
 RegisterNetEvent('B1-Police:CuffPlayercl', function(id, thing)
+    local cuffs = 'cuff'
     local count = exports.ox_inventory:Search('count', 'cuffs')
-    if count > 0 then
-        if id == nil then
-            local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-            if closestPlayer ~= -1 and closestDistance <= 3.0 then
-                id = GetPlayerServerId(closestPlayer)
+    if thing == 'hc' then
+        if count > 1 then
+            if id == nil then
+                local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+                if closestPlayer ~= -1 and closestDistance <= 3.0 then
+                    id = GetPlayerServerId(closestPlayer)
+                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    loc = GetEntityForwardVector(PlayerPedId())
+                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
+                end
+            else
                 heading = GetEntityHeading(GetPlayerPed(-1))
                 loc = GetEntityForwardVector(PlayerPedId())
                 Coords = GetEntityCoords(GetPlayerPed(-1))
-                TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing)
+                TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
             end
         else
-            TriggerServerEvent('B1-Police:CuffPlayersv', id, thing)
+            TriggerEvent('B1-Police:Notify', 'Police', 'You Dont have enough Cuffs!', 'error')
         end
     else
-        TriggerEvent('B1-Police:Notify', 'Police', 'You Dont have Cuffs!', 'error')
+        if count > 0 then
+            if id == nil then
+                local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+                if closestPlayer ~= -1 and closestDistance <= 3.0 then
+                    id = GetPlayerServerId(closestPlayer)
+                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    loc = GetEntityForwardVector(PlayerPedId())
+                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
+                end
+            else
+                heading = GetEntityHeading(GetPlayerPed(-1))
+                loc = GetEntityForwardVector(PlayerPedId())
+                Coords = GetEntityCoords(GetPlayerPed(-1))
+                TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
+            end
+        else
+            TriggerEvent('B1-Police:Notify', 'Police', 'You Dont have Cuffs!', 'error')
+        end
     end
 end)
 
 RegisterNetEvent('B1-Police:ZipPlayercl', function(id, thing)
+    local cuffs = 'zip'
     local count = exports.ox_inventory:Search('count', 'ziptie')
     if count > 0 then
         if thing == 'hc' and count < 2 then
@@ -192,20 +240,32 @@ RegisterNetEvent('B1-Police:ZipPlayercl', function(id, thing)
                 local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
                 if closestPlayer ~= -1 and closestDistance <= 3.0 then
                     id = GetPlayerServerId(closestPlayer)
-                    TriggerServerEvent('B1-Police:ZipPlayersv', id, thing)
+                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    loc = GetEntityForwardVector(PlayerPedId())
+                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                 end
             else
-                TriggerServerEvent('B1-Police:ZipPlayersv', id, thing)
+                heading = GetEntityHeading(GetPlayerPed(-1))
+                loc = GetEntityForwardVector(PlayerPedId())
+                Coords = GetEntityCoords(GetPlayerPed(-1))
+                TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
             end
         else
             if id == nil then
                 local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
                 if closestPlayer ~= -1 and closestDistance <= 3.0 then
                     id = GetPlayerServerId(closestPlayer)
-                    TriggerServerEvent('B1-Police:ZipPlayersv', id, thing)
+                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    loc = GetEntityForwardVector(PlayerPedId())
+                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                 end
             else
-                TriggerServerEvent('B1-Police:ZipPlayersv', id, thing)
+                heading = GetEntityHeading(GetPlayerPed(-1))
+                loc = GetEntityForwardVector(PlayerPedId())
+                Coords = GetEntityCoords(GetPlayerPed(-1))
+                TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
             end
         end
     else

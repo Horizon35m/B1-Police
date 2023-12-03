@@ -51,21 +51,39 @@ RegisterNetEvent('B1-Police:FriskPlayersv', function(id, heading, loc, Coords)
     end)
 end)
 
-RegisterNetEvent('B1-Police:CuffPlayersv', function(id, heading, loc, Coords, thing)
+RegisterNetEvent('B1-Police:CuffPlayersv', function(id, heading, loc, Coords, thing, cuffs)
 	local _source = source 
 	local playerPed = GetPlayerPed(target)
-	local arrestped = GetPlayerPed(source)
+	-- local arrestped = GetPlayerPed(source)
 	local x, y, z   = table.unpack(Coords + loc * 1.0)
 	SetEntityCoords(playerPed, x, y, z)
 	SetEntityHeading(playerPed, heading)
     lib.callback('B1-Police:GetCuff', id, function(stats)
-        if stats == 'cuffed' then
+        if stats == 'cuffed' and thing == 'hc' then
+            lib.callback('B1-Police:GetCuffType', id, function(stats)
+                if stats == 'hard' then
+                    TriggerClientEvent('B1-Police:Notify', _source, 'Police', 'They are already Hardcuffed', 'error')
+                else       
+                    TriggerClientEvent('B1-Police:ArrestPlayer', _source)
+                    TriggerClientEvent('B1-Police:GetArrested', id, _source, thing, cuffs)
+                end
+            end)
+        elseif stats == 'cuffed' and thing == nil then 
             TriggerClientEvent('B1-Police:Notify', _source, 'Police', 'They are already Cuffed', 'error')
-        elseif stats == 'zipped' then
-            TriggerClientEvent('B1-Police:Notify', _source, 'Police', 'They are already Zipped', 'error')
+        elseif stats == 'zipped' and thing == 'hc' then
+            lib.callback('B1-Police:GetCuffType', id, function(stats)
+                if stats == 'hard' then
+                    TriggerClientEvent('B1-Police:Notify', _source, 'Police', 'They are already Hardzipped', 'error')
+                else       
+                    TriggerClientEvent('B1-Police:ArrestPlayer', _source)
+                    TriggerClientEvent('B1-Police:GetArrested', id, _source, thing, cuffs)
+                end
+            end)
+        elseif stats == 'zipped' and thing == nil then 
+            TriggerClientEvent('B1-Police:Notify', _source, 'Police', 'They are already Zuffed', 'error')
         else
-            TriggerClientEvent('B1-Police:ArrestPlayer', _source, id, arrestped, thing)
-            TriggerClientEvent('B1-Police:GetArrested', id, _source, arrestped, thing)
+            TriggerClientEvent('B1-Police:ArrestPlayer', _source)
+            TriggerClientEvent('B1-Police:GetArrested', id, _source, thing, cuffs)
         end
     end)
 end)
