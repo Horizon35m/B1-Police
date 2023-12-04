@@ -6,6 +6,22 @@ lib.addCommand('frisk', {
     TriggerClientEvent('B1-Police:FriskPlayercl', source)
 end)
 
+lib.addCommand('cuff', {
+    help = 'Frisk nearest player',
+    params = {
+        {
+            name = 'cuff',
+            type = 'string',
+            help = 'Type of Cuff.',
+            optional = true,
+        },
+    },
+    -- restricted = 'group.admin'
+}, function(source, args, raw)
+    local id = nil
+    TriggerClientEvent('B1-Police:CuffPlayercl', source, id, args.cuff)
+end)
+
 RegisterNetEvent('B1-Police:RemoveItem', function(id, item, count)
     exports.ox_inventory:RemoveItem(id, item, count)
 end)

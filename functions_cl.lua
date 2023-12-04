@@ -49,7 +49,7 @@ function LoadDict(dict)
     end
 end
 
-function gettingArrested(cuffs, id)
+function gettingArrested(copid, thing, cuffs)
     SetCurrentPedWeapon(PlayerPedId(), GetHashKey('WEAPON_UNARMED'), true)
 	Wait(250)
 	if myCount < 4 then
@@ -58,15 +58,26 @@ function gettingArrested(cuffs, id)
             Wait(500)
             ClearPedTasks(PlayerPedId())
             myCount = myCount + 1
-            isHandcuffed = false
    		else
             myCount = 0
-            Cuffed(cuffs, id)
+            if thing == 'hc' then
+                isCuffed = true
+                isHardCuffed = true
+            else
+                isCuffed = true
+            end
+            Cuffed(cuffs, copid)
    		end
    	else
         Wait(3000)
         myCount = 0
-        Cuffed(cuffs, id)
+        if thing == 'hc' then
+            isCuffed = true
+            isHardCuffed = true
+        else
+            isCuffed = true
+        end
+        Cuffed(cuffs, copid)
    	end
 end
 
@@ -106,7 +117,7 @@ function Cuffed(cuffs, id)
     end
     LocalPlayer.state:set('invBusy', true, false)
     CreateThread(function()
-        while isHandcuffed do
+        while isCuffed do
             Wait(0)
             DisableControlAction(0, 24, true) -- Attack
 			DisableControlAction(0, 257, true) -- Attack 2
@@ -240,15 +251,15 @@ RegisterNetEvent('B1-Police:ZipPlayercl', function(id, thing)
                 local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
                 if closestPlayer ~= -1 and closestDistance <= 3.0 then
                     id = GetPlayerServerId(closestPlayer)
-                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    heading = GetEntityHeading(PlayerPedId())
                     loc = GetEntityForwardVector(PlayerPedId())
-                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    Coords = GetEntityCoords(PlayerPedId())
                     TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                 end
             else
-                heading = GetEntityHeading(GetPlayerPed(-1))
+                heading = GetEntityHeading(PlayerPedId())
                 loc = GetEntityForwardVector(PlayerPedId())
-                Coords = GetEntityCoords(GetPlayerPed(-1))
+                Coords = GetEntityCoords(PlayerPedId())
                 TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
             end
         else
@@ -256,15 +267,15 @@ RegisterNetEvent('B1-Police:ZipPlayercl', function(id, thing)
                 local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
                 if closestPlayer ~= -1 and closestDistance <= 3.0 then
                     id = GetPlayerServerId(closestPlayer)
-                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    heading = GetEntityHeading(PlayerPedId())
                     loc = GetEntityForwardVector(PlayerPedId())
-                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    Coords = GetEntityCoords(PlayerPedId())
                     TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                 end
             else
-                heading = GetEntityHeading(GetPlayerPed(-1))
+                heading = GetEntityHeading(PlayerPedId())
                 loc = GetEntityForwardVector(PlayerPedId())
-                Coords = GetEntityCoords(GetPlayerPed(-1))
+                Coords = GetEntityCoords(PlayerPedId())
                 TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
             end
         end
@@ -273,12 +284,19 @@ RegisterNetEvent('B1-Police:ZipPlayercl', function(id, thing)
     end
 end)
 
-RegisterNetEvent('B1-Police:GetArrested', function(copid, copped, thing)
-    if isCuffed == true then
-        isHardCuffed
-        ClearPedTasks(PlayerPedId())
-
-    LoadDict()
-    GetArrested()
-
+RegisterNetEvent('B1-Police:GetArrested', function(copid, thing, cuffs)
+    if not isCuffed then
+        gettingArrested(copid, thing, cuffs)
+    elseif isCuffed then
+		LoadAnimDict('mp_arresting')
+		TaskPlayAnim(playerPed, 'mp_arresting', 'b_uncuff', 8.0, -8,-1, 2, 0, 0, 0, 0)
+		Wait(2000)
+        isCuffed = false
+        isHardCuffed = false
+        Wait(100)
+		ClearPedTasks(playerPed)
+        ClearPedSecondaryTask(playerPed)
+        DeleteEntity(cuffObj)
+        LocalPlayer.state:set('invBusy', false, false)
+    end
 end)
