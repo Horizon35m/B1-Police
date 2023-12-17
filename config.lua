@@ -24,6 +24,43 @@ Config.SoftCuffKey = '->'
 
 Config.HardCuffKey = '<-'
 
+Config.SecurityCams = {
+    {
+        location = "Pacific Bank", 
+        cameras = {
+            {coords = vector3(257.45, 210.07, 109.08), rotation = {x = -25.0, y = 0.0, z = 28.05}},
+            {coords = vector3(269.66, 223.67, 113.23), rotation = {x = -30.0, y = 0.0, z = 111.29}},
+            {coords = vector3(241.64, 233.83, 111.48), rotation = {x = -35.0, y = 0.0, z = 120.46}},
+            {coords = vector3(232.86, 221.46, 107.83), rotation = {x = -25.0, y = 0.0, z = -140.91}},
+        },
+    },
+    {
+        location = "Grove St. Gas", 
+        cameras = {
+            {coords = vector3(-53.1433, -1746.714, 31.546), rotation = {x = -35.0, y = 0.0, z = -168.9182}},
+        },
+    },    
+}
+
+Config.Mugshotoptions = {
+    LogTitle = 'Mugshot',
+    LogName = 'Mugshot',
+    LogIcon = 'https://cdn.discordapp.com/attachments/1026588960207667321/1114942675951562844/border-01-tebex.png',
+    ScreenShotHook = "https://discord.com/api/webhooks/1185571707474427905/PoPWOEhqkO06KGmZFclCUDO6OxUwYkNpnGWaTVKaTDpgoMMBn0wj8H1gT1JLLNgtfsyZ",
+    MugShotHook = "https://discord.com/api/webhooks/1185570647930327131/XZB8-oPkVHbmrd8ry45axFHjA5UaV69qzfpAQRy6QroCMJftjOvYTPz_PzviPZRbNBTN",
+}
+
+Config.Mugshotsloc = {
+    MRPD = {
+            target = {coords = vec3(461.0, -996.0, 25.0), size = vec3(1, 1, 1), rotation = 0, debug = true, groups = 'police'},
+            mugshot = {pos = {x = 465.727, y = -998.084, z = 23.914}, rotation = 86.008},
+            camera = {pos = vec3(464.730, -998.058, 25.5), rotation = {x = -8.9770584106445, y = 0.014564922079444, z = -90.994934082031}},
+            
+            PoliceJob = 'police',
+            BoardHeader = 'Los Santos County Sherrifs office',
+        },
+}
+
 Config.Guns = { -- Where you set the items detected by frisk only supports weapons atm.
     "WEAPON_PISTOL_MK2",
     "WEAPON_ASSAULTSMG",

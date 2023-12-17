@@ -27,3 +27,7 @@ dependencies {
     'ox_lib',
     'screenshot-basic'
 }
+
+-- Credits
+-- ZipTie Cuffs - FloatStreak - https://www.gta5-mods.com/misc/new-handcuffs-cable-ties
+-- Original Mugshot Script - https://github.com/abdullasadi/kael-mugshot
