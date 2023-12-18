@@ -433,13 +433,17 @@ end)
 
 -- //ANCHOR - Frisk Logic Net CL
 
-RegisterNetEvent('B1-Police:FriskPlayercl', function()
-    local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-    if closestPlayer ~= -1 and closestDistance <= 3.0 then
-        id = GetPlayerServerId(closestPlayer)
-        TriggerServerEvent('B1-Police:FriskPlayersv', id)
+RegisterNetEvent('B1-Police:FriskPlayercl', function(id)
+    if id == nil
+        local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+        if closestPlayer ~= -1 and closestDistance <= 3.0 then
+            id = GetPlayerServerId(closestPlayer)
+            TriggerServerEvent('B1-Police:FriskPlayersv', id)
+        else
+            TriggerEvent('B1-Police:Notify', 'Police', 'Nobody nearby!', 'error')
+        end
     else
-        TriggerEvent('B1-Police:Notify', 'Police', 'Nobody nearby!', 'error')
+        TriggerServerEvent('B1-Police:FriskPlayersv', id)
     end
 end)
 
@@ -647,7 +651,7 @@ RegisterNetEvent("B1-Police:TakeMugshotCL", function(officer, location, policeNo
 	local SuspectCoods = GetEntityCoords(PlayerPed)
     local mug = Config.Mugshotsloc[location].mugshot.pos
     local distance = Vdist(mug.x, mug.y, mug.z, SuspectCoods.x, SuspectCoods.y, SuspectCoods.z)
-    if distance < 3 then
+    if distance < 20 then
         InMugshot = true
         local PlayerData = ESX.GetPlayerData()
         local Name = PlayerData.firstName.. " ".. PlayerData.lastName

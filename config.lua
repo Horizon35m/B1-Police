@@ -48,14 +48,22 @@ Config.Mugshotoptions = {
 }
 
 Config.Mugshotsloc = {
-    MRPD = {
-            target = {coords = vec3(461.0, -996.0, 25.0), size = vec3(1, 1, 1), rotation = 0, debug = true, groups = 'police'},
-            mugshot = {pos = {x = 465.727, y = -998.084, z = 23.914}, rotation = 86.008},
-            camera = {pos = vec3(464.730, -998.058, 25.5), rotation = {x = -8.9770584106445, y = 0.014564922079444, z = -90.994934082031}},
+    LSHP = {
+            target = {coords = vec3(1556.2, 835.35, 77.05), size = vec3(0.45, 1.05, 0.75), rotation = 328.75, debug = true, groups = 'police'},
+            mugshot = {pos = {x = 1559.377, y = 837.511, z = 77.}, rotation = 152.532},
+            camera = {pos = vec3(1558.736, 836.173, 77.655), rotation = {x = 0, y = 0.0, z = -31.467708587646}},
             
             PoliceJob = 'police',
-            BoardHeader = 'Los Santos County Sherrifs office',
-        },
+            BoardHeader = 'Los Santos Highway Patrol',
+    },
+    MRPD = {
+            target = {coords = vec3(474.15, -1014.4, 26.25), size = vec3(0.55, 0.25, 0.15), rotation = 0.0, debug = true, groups = 'police'},
+            mugshot = {pos = vec3(473.049, -1011.176, 25.6), rotation = 177.427},
+            camera = {pos = vec3(473.0146484375, -1012.581237793, 26.2), rotation = {x = 0, y = 0.0, z = 0.23536868393421}},
+            
+            PoliceJob = 'police',
+            BoardHeader = 'Los Santos Sherrifs Office',
+    },
 }
 
 Config.Guns = { -- Where you set the items detected by frisk only supports weapons atm.
