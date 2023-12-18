@@ -1,24 +1,21 @@
 Config = {}
 
-Config.DiscordWebHook = ''
-
 Config.EmoteResource = 'native' -- native, this is where you set you animation resource ONLY SUPPORTS NATIVE ATM
 
 Config.Notify = 'ox' -- Notify method ox for ox_lib TODO ADD MORE
 
-Config.EnableMenu = true -- Enables PD action menu REQUIRES OX_LIB
+Config.EnableMenu = true -- Enables PD action menu
 
-Config.EnableRadial = true -- Enables Premade radials REQUIRES OX_LIB
+Config.EnableRadial = true -- Enables Premade radials
 
 Config.PDJobs = { -- The jobs that have access to PD functions
     'police',
 }
 
-Config.EnableTackle = true -- Enables the Tackle keybind
-
-Config.Tacklekeybind = 'H'
 
 Config.EnableCuffKeys = true -- Enables Handcuff keybinds
+
+Config.MaxCuffBreaks = 4
 
 Config.SoftCuffKey = '->'
 

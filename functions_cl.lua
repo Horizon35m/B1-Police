@@ -17,6 +17,13 @@ local isHardCuffed = false
 -- Cuff Count
 local myCount = 0
 
+-- Carry Logic Variables
+local IsEscorting = false
+local IsCarrying = false
+local IsDragging = false
+local InAnim = false
+local IsAttached = false
+
 -- //ANCHOR - Client Callbacks
 
 lib.callback.register('B1-Police:GetItems', function()
@@ -104,7 +111,7 @@ function gettingArrested(id, thing, cuffs)
 	Wait(250)
 	LoadDict('mp_arrest_paired')
 	TaskPlayAnim(playerPed, 'mp_arrest_paired', 'crook_p2_back_right', 8.0, -8, 3750 , 2, 0, 0, 0, 0)
-	if myCount < 4 then
+	if myCount < Config.MaxCuffBreaks then
         local success = lib.skillCheck({'hard'}, {'e'})
         if success then
             Wait(500)
@@ -394,6 +401,22 @@ CreateThread(function()
     end
 end)
 
+-- //ANCHOR - Carry Logic func
+
+function BeingEscorted()
+    CreateThread(function()
+        while IsAttached do
+            Wait(0)
+            local speed = GetEntitySpeed(PlayerPedId())
+            if speed > 1 then
+                if IsEntityPlayingAnim(PlayerPedId(), 'move_m@generic_variations@walk', 'walk_b', 3) ~= 1 then
+                    TaskPlayAnim(PlayerPedId(), 'move_m@generic_variations@walk','walk_b' ,8.0, -8, -1, 0, 0, false, false, false)
+                end
+            end
+        end
+    end)
+end
+
 -- //ANCHOR - Notify Logic Net
 
 RegisterNetEvent('B1-Police:Notify', function(header, desc, thing)
@@ -431,15 +454,15 @@ RegisterNetEvent('B1-Police:CuffPlayercl', function(id, thing, cuffs)
                     local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
                     if closestPlayer ~= -1 and closestDistance <= 3.0 then
                         id = GetPlayerServerId(closestPlayer)
-                        heading = GetEntityHeading(GetPlayerPed(-1))
+                        heading = GetEntityHeading(PlayerPedId())
                         loc = GetEntityForwardVector(PlayerPedId(-1))
-                        Coords = GetEntityCoords(GetPlayerPed(-1))
+                        Coords = GetEntityCoords(PlayerPedId())
                         TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                     end
                 else
-                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    heading = GetEntityHeading(PlayerPedId())
                     loc = GetEntityForwardVector(PlayerPedId(-1))
-                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    Coords = GetEntityCoords(PlayerPedId())
                     TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                 end
             else
@@ -451,15 +474,15 @@ RegisterNetEvent('B1-Police:CuffPlayercl', function(id, thing, cuffs)
                     local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
                     if closestPlayer ~= -1 and closestDistance <= 3.0 then
                         id = GetPlayerServerId(closestPlayer)
-                        heading = GetEntityHeading(GetPlayerPed(-1))
+                        heading = GetEntityHeading(PlayerPedId())
                         loc = GetEntityForwardVector(PlayerPedId(-1))
-                        Coords = GetEntityCoords(GetPlayerPed(-1))
+                        Coords = GetEntityCoords(PlayerPedId())
                         TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                     end
                 else
-                    heading = GetEntityHeading(GetPlayerPed(-1))
+                    heading = GetEntityHeading(PlayerPedId())
                     loc = GetEntityForwardVector(PlayerPedId(-1))
-                    Coords = GetEntityCoords(GetPlayerPed(-1))
+                    Coords = GetEntityCoords(PlayerPedId())
                     TriggerServerEvent('B1-Police:CuffPlayersv', id, heading, loc, Coords, thing, cuffs)
                 end
             else
@@ -709,6 +732,163 @@ RegisterNetEvent("B1-Police:TakeMugshotCL", function(officer, location, policeNo
         InMugshot = false
     else
         TriggerServerEvent('B1-Police:NotifySV', officer, 'Police', 'They are not in the MugShot room!', 'error')
+    end
+end)
+
+-- //ANCHOR - Put in Car Logic
+
+RegisterNetEvent('B1-Police:PutinCarCL', function(id, veh)
+    if id == nil then
+        local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+        if closestPlayer ~= -1 and closestDistance <= 3.0 then
+            Coords = GetEntityCoords(PlayerPedId())
+            local id = GetPlayerServerId(closestPlayer)
+            TriggerServerEvent('B1-Police:PutinCarSV', id, veh)
+        else
+            TriggerEvent('B1-Police:Notify', "Police", "Nobody in range.", "error")
+        end
+    else
+        TriggerServerEvent('B1-Police:PutinCarSV', id, veh)
+    end
+end)
+
+RegisterNetEvent('B1-Police:GetinCar', function()
+    local playerPed = PlayerPedId()
+    local playerCoords = GetEntityCoords(PlayerPedId())
+    local vehicle, vehicleCoords = lib.getClosestVehicle(playerCoords, 3, false)
+    if not vehicle then
+        lib.notify({
+            title = 'Seats',
+            description = 'No free seats!',
+            type = 'error'
+        })
+    end
+    local maxSeats, freeSeat = GetVehicleMaxNumberOfPassengers(vehicle)
+    for i = maxSeats - 1, 0, -1 do
+        if IsVehicleSeatFree(vehicle, i) then
+            freeSeat = i
+            break
+        end
+    end
+    if freeSeat then
+        TaskWarpPedIntoVehicle(playerPed, vehicle, freeSeat)
+        player.isDragged = false
+    end
+end)
+
+RegisterNetEvent('B1-Police:TakeoutCar', function()
+    local coords = GetEntityCoords(PlayerPedId())
+    local target = lib.getClosestPlayer(coords, 3, false)
+    if not target then return end
+    local targetServerId = GetPlayerServerId(target)
+    TriggerServerEvent('B1-Police:PutoutVehicleSV', targetServerId)
+end)
+
+RegisterNetEvent('B1-Police:PutoutVehicleCl', function()
+    local playerPed = cache.ped
+    local playerVehicle = cache.vehicle
+    if not playerVehicle then return end
+    TaskLeaveVehicle(playerPed, playerVehicle, 0)
+end)
+
+-- //ANCHOR - Escort & Carry Logic
+
+RegisterNetEvent('B1-Police:CarryPlayerCL', function(id, state)
+    if IsCarrying or IsEscorting or IsDragging then
+        TriggerEvent('B1-Police:Notify', "General", "Already Carrying someone.", "error")
+    else
+        if id == nil then
+            local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+            if closestPlayer ~= -1 and closestDistance <= 3.0 then
+                Coords = GetEntityCoords(PlayerPedId())
+                local id = GetPlayerServerId(closestPlayer)
+            else
+                TriggerEvent('B1-Police:Notify', "Police", "Nobody in range.", "error")
+            end
+        else
+            TriggerServerEvent('B1-Police:AttachPlayer', id, state)
+        end
+    end
+end)
+
+RegisterNetEvent('B1-Police:DoAnim', function(id, state)
+    if InAnim then
+        ClearPedTasks(PlayerPedId())
+        IsEscorting = false
+        IsCarrying = false
+        IsDragging = false
+        InAnim = false
+    elseif state == 'escort' then
+        IsEscorting = true
+        InAnim = true
+        LoadAnimDict('amb@world_human_drinking@coffee@male@base')
+        if IsEntityPlayingAnim(PlayerPedId(), 'amb@world_human_drinking@coffee@male@base','base', 3) ~= 1 then
+            TaskPlayAnim(PlayerPedId(), 'amb@world_human_drinking@coffee@male@base','base' ,8.0, -8, -1, 51, 0, false, false, false)
+        end
+    elseif state == 'carry' then
+        IsCarrying = true
+        InAnim = true
+        LoadAnimDict('missfinale_c2mcs_1')
+        TaskPlayAnim(PlayerPedId(), 'missfinale_c2mcs_1', "fin_c2_mcs_1_camman", 8.0, -8.0, 100000, 49, 0, false, false, false)
+    elseif state == 'drag' then
+        IsDragging = true
+        InAnim = true
+    end
+end)
+
+RegisterNetEvent('B1-Police:GetCarried', function(state, sourcePed)
+    if IsAttached then
+        IsAttached = false
+        DetachEntity(PlayerPedId())
+        ClearPedTasks(PlayerPedId())
+    else
+        if state == 'escort' then
+            ClearPedTasks(PlayerPedId())
+            IsAttached = true
+            LoadAnimDict('mp_arresting')
+            LoadAnimDict('move_m@generic_variations@walk')
+            TaskPlayAnim(PlayerPedId(), 'mp_arresting', 'idle', 8.0, -8, -1, 49, 0.0, false, false, false)
+            AttachEntityToEntity(PlayerPedId(), sourcePed, 1816,0.25, 0.49, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+            amBeingEscorted()
+        elseif state == 'carry' then
+            ClearPedTasks(PlayerPedId())
+            IsAttached = true
+            LoadAnimDict('nm')
+            TaskPlayAnim(PlayerPedId(), 'nm', 'firemans_carry', 8.0, -8.0, 100000, 33, 0, false, false, false)
+            AttachEntityToEntity(PlayerPedId(), sourcePed, 0, 0.27, 0.15, 0.63, 0.5, 0.5, 180, false, false, false, false, 2, false)
+        elseif state == 'drag' then
+            ClearPedTasks(PlayerPedId())
+            IsAttached = true
+            AttachEntityToEntity(PlayerPedId(), ped, 1816,0.25, 0.49, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+        end
+    end
+end)
+
+-- //ANCHOR - Robbing and Searching Logic
+
+RegisterNetEvent('B1-Police:OpenInv', function(id)
+    local PlayerData = ESX.GetPlayerData()
+    if PlayerData.job == Config.PDJobs then
+        exports.ox_inventory:openInventory('player', id)
+    else
+        TriggerServerEvent('B1-Police:Freeze', id, true)
+        if lib.progressCircle({
+            duration = 10000,
+            position = 'bottom',
+            useWhileDead = false,
+            disable = {
+                car = true,
+                move = true,
+                combat = true,
+            },
+            anim = {
+                dict = 'random@countryside_gang_fight',
+                clip = 'biker_02_stickup_loop'
+            },
+        }) then 
+            exports.ox_inventory:openInventory('player', id)
+            TriggerServerEvent('B1-Police:Freeze', id, false)
+        end
     end
 end)
 

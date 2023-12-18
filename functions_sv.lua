@@ -237,6 +237,38 @@ RegisterNetEvent("B1-Police:MugLog", function(officer, MugShot, policeNotes)
     PerformHttpRequest(Config.Mugshotoptions.MugShotHook, function() end, 'POST', json.encode({ username = Config.Mugshotoptions.LogName, embeds = embedData}), { ['Content-Type'] = 'application/json' })
 end)
 
+-- //ANCHOR - Put in & Take out Car Logic
+
+RegisterNetEvent('B1-Police:PutinCarSV', function(id, veh)
+    TriggerClientEvent('B1-Police:GetinCar', id, veh)
+end)
+
+RegisterNetEvent('B1-Police:PutoutVehicleSV', function(id)
+    local id = tonumber(id)
+    local sourcePed = GetPlayerPed(source)
+    local targetPed = GetPlayerPed(id)
+    if target < 1 or #(GetEntityCoords(sourcePed) - GetEntityCoords(targetPed)) > 4.0 then
+        print(source .. ' probible modder')
+    else
+        TriggerClientEvent('B1-Police:PutoutVehicleCl', id)
+    end
+end)
+
+-- //ANCHOR - Freeze
+
+RegisterNetEvent('B1-Police:Freeze', function(id, state)
+    if state == true then
+        FreezeEntityPosition(id, true)
+    else
+        FreezeEntityPosition(id, false)
+    end
+end)
+
+RegisterNetEvent('B1-Police:AttachPlayer', function(id, state)
+    local sourcePed = GetPlayerPed(source)
+    TriggerClientEvent('B1-Police:DoAnim', source, state)
+    TriggerClientEvent('B1-Police:GetCarried', id, state, sourcePed)
+end)
 
 RegisterCommand('testdatasv', function(source)
     local PlayerData = ESX.GetPlayerFromId(source)
