@@ -23,6 +23,12 @@ local IsCarrying = false
 local IsDragging = false
 local InAnim = false
 local IsAttached = false
+local CarriedId = nil
+
+-- Dispatch Logic
+local saveOption = false
+local oldWaypoint = nil
+local savedWaypoint = nil
 
 -- //ANCHOR - Client Callbacks
 
@@ -110,7 +116,7 @@ function gettingArrested(id, thing, cuffs)
     SetCurrentPedWeapon(PlayerPedId(-1), GetHashKey('WEAPON_UNARMED'), true)
 	Wait(250)
 	LoadDict('mp_arrest_paired')
-	TaskPlayAnim(playerPed, 'mp_arrest_paired', 'crook_p2_back_right', 8.0, -8, 3750 , 2, 0, 0, 0, 0)
+	TaskPlayAnim(PlayerPedId(), 'mp_arrest_paired', 'crook_p2_back_right', 8.0, -8, 3750 , 2, 0, 0, 0, 0)
 	if myCount < Config.MaxCuffBreaks then
         local success = lib.skillCheck({'hard'}, {'e'})
         if success then
@@ -253,7 +259,6 @@ end
 -- //ANCHOR - Camera Logic Func
 
 function HandleCameraEvent(cameraId)
-    print(cameraId)
     local cameras = Config.SecurityCams[cameraId]
     if cameras == nil then
         print('no camera')
@@ -381,7 +386,6 @@ CreateThread(function()
             -- GO FORWARD CAMERA
             if IsControlJustPressed(1, 175) then
                 local newCamIndex
-                print(currentCameraIndexIndex)
                 if currentCameraIndexIndex == #Config.SecurityCams[currentCameraIndex].cameras then
                     newCamIndex = 1
                 else
@@ -398,6 +402,110 @@ CreateThread(function()
             end
         end
         Wait(0)
+    end
+end)
+
+-- //ANCHOR - Dispatch Logic
+
+-- save Waypoint
+RegisterNetEvent('B1-Police:SaveWaypoint', function()
+    if savedWaypoint == nil then
+        local waypoint = GetFirstBlipInfoId(8)
+        if DoesBlipExist(waypoint) then
+            savedWaypoint = waypoint
+            TriggerEvent('B1-Police:Notify', 'Dispatch', 'Waypoint saved!', 'success')
+        else
+            TriggerEvent('B1-Police:Notify', 'Dispatch', 'No waypoint set!', 'error')
+        end
+    else
+        if saveOption == false then
+            local input = lib.inputDialog('Save Waypoint', {
+                {type = 'checkbox', label = 'I know that this Overrides my Previously saved point!', required = true},
+                {type = 'input', label = 'yes or no', required = true},
+                {type = 'checkbox', label = 'Remember my choice'},
+            })
+            if input[1] == true and input[2] == 'yes' then
+                if input[3] == true then saveOption = true end
+                local waypoint = GetFirstBlipInfoId(8)
+                if DoesBlipExist(waypoint) then
+                    local savedWaypoint = waypoint
+                    TriggerEvent('B1-Police:Notify', 'Dispatch', 'Waypoint saved!', 'success')
+                else
+                    TriggerEvent('B1-Police:Notify', 'Dispatch', 'No waypoint set!', 'error')
+                end
+            else
+                TriggerEvent('B1-Police:Notify', 'Dispatch', 'You did not agree to Override!', 'error')
+                saveOption = false
+            end
+        else
+            local waypoint = GetFirstBlipInfoId(8)
+            if DoesBlipExist(waypoint) then
+                local savedWaypoint = waypoint
+                TriggerEvent('B1-Police:Notify', 'Dispatch', 'Waypoint saved!', 'success')
+            else
+                TriggerEvent('B1-Police:Notify', 'Dispatch', 'No waypoint set!', 'error')
+            end
+        end
+    end
+end)
+
+-- reset Waypoint
+RegisterNetEvent('B1-Police:ResetWaypoint', function()
+    if oldWaypoint == nil then
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'No old waypoint set!', 'error')
+    else
+        local coords = GetBlipInfoIdCoord(oldWaypoint)
+        DeleteWaypoint()
+        SetNewWaypoint(coords.x, coords.y)
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'Old waypoint set!', 'success')
+    end
+end)
+
+-- reset Waypoint Option
+RegisterNetEvent('B1-Police:ResetWaypointOption', function()
+    saveOption = false
+end)
+
+-- set saved Waypoint
+RegisterNetEvent('B1-Police:SetSavedWaypoint', function()
+    if savedWaypoint == nil then
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'No old waypoint set!', 'error')
+    else
+        local coords = GetBlipInfoIdCoord(savedWaypoint)
+        DeleteWaypoint()
+        SetNewWaypoint(coords.x, coords.y)
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'Old waypoint set!', 'success')
+    end
+end)
+
+-- Send Waypoint
+RegisterNetEvent('B1-Police:SendWaypointCL', function(id, job, thing)
+    local waypoint = GetFirstBlipInfoId(8)
+    if DoesBlipExist(waypoint) then
+        local coords = GetBlipInfoIdCoord(waypoint)
+        TriggerServerEvent('B1-Police:SendWaypointSV', id, thing, job, coords)
+        DeleteWaypoint()
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'Waypoint set!', 'success')
+    else
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'No waypoint set!', 'error')
+    end
+end)
+
+-- Get Waypoint
+RegisterNetEvent('B1-Police:GetNewWaypoint', function(coords)
+    if coords == nil then
+        TriggerEvent('B1-Police:Notify', 'Dispatch', 'No waypoint received from Dispatch!', 'error')
+    else
+        local waypoint = GetFirstBlipInfoId(8)
+        if waypoint == nil then
+            TriggerEvent('B1-Police:Notify', 'Dispatch', 'Waypoint received from Dispatch!', 'success')
+            SetNewWaypoint(coords.x, coords.y)
+        else
+            oldWaypoint = waypoint
+            DeleteWaypoint()
+            TriggerEvent('B1-Police:Notify', 'Dispatch', 'Waypoint received from Dispatch!', 'success')
+            SetNewWaypoint(coords.x, coords.y)
+        end
     end
 end)
 
@@ -434,7 +542,7 @@ end)
 -- //ANCHOR - Frisk Logic Net CL
 
 RegisterNetEvent('B1-Police:FriskPlayercl', function(id)
-    if id == nil
+    if id == nil then
         local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
         if closestPlayer ~= -1 and closestDistance <= 3.0 then
             id = GetPlayerServerId(closestPlayer)
@@ -548,6 +656,7 @@ RegisterNetEvent('B1-Police:UnCuff', function(id, thing)
             thing = 'key'
             TriggerServerEvent('B1-Police:UnCuffsv', id, thing, heading, loc, Coords)
         elseif thing == 'hmkey' then
+            Wait(600)
             local success = lib.skillCheck({'hard'}, {'e'})
             if success then
                 heading = GetEntityHeading(PlayerPedId(-1))
@@ -559,6 +668,7 @@ RegisterNetEvent('B1-Police:UnCuff', function(id, thing)
                 TriggerEvent('B1-Police:Notify', 'Police', 'Finger game bad!', 'error')
             end
         elseif thing == 'cutters' then
+            Wait(600)
             local success = lib.skillCheck({'medium'}, {'e'})
             if success then
                 heading = GetEntityHeading(PlayerPedId(-1))
@@ -642,7 +752,6 @@ RegisterNetEvent("B1-Police:FillBoard", function(location)
 
     })
     if not input then return end
-    print(json.encode(input), input[1], input[2])
     TriggerServerEvent('B1-Police:TakeMugshotSV', location, input[1], input[2])
 end)
 
@@ -651,7 +760,7 @@ RegisterNetEvent("B1-Police:TakeMugshotCL", function(officer, location, policeNo
 	local SuspectCoods = GetEntityCoords(PlayerPed)
     local mug = Config.Mugshotsloc[location].mugshot.pos
     local distance = Vdist(mug.x, mug.y, mug.z, SuspectCoods.x, SuspectCoods.y, SuspectCoods.z)
-    if distance < 20 then
+    if distance < 3 then
         InMugshot = true
         local PlayerData = ESX.GetPlayerData()
         local Name = PlayerData.firstName.. " ".. PlayerData.lastName
@@ -795,52 +904,55 @@ RegisterNetEvent('B1-Police:PutoutVehicleCl', function()
     TaskLeaveVehicle(playerPed, playerVehicle, 0)
 end)
 
--- //ANCHOR - Escort & Carry Logic
+-- //ANCHOR - Escort & Tackle Logic
 
 RegisterNetEvent('B1-Police:CarryPlayerCL', function(id, state)
-    if IsCarrying or IsEscorting or IsDragging then
-        TriggerEvent('B1-Police:Notify', "General", "Already Carrying someone.", "error")
-    else
-        if id == nil then
-            local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-            if closestPlayer ~= -1 and closestDistance <= 3.0 then
-                Coords = GetEntityCoords(PlayerPedId())
-                local id = GetPlayerServerId(closestPlayer)
-            else
-                TriggerEvent('B1-Police:Notify', "Police", "Nobody in range.", "error")
-            end
-        else
+    if id == nil then
+        local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+        if closestPlayer ~= -1 and closestDistance <= 3.0 then
+            Coords = GetEntityCoords(PlayerPedId())
+            local id = GetPlayerServerId(closestPlayer)
             TriggerServerEvent('B1-Police:AttachPlayer', id, state)
+        else
+            TriggerEvent('B1-Police:Notify', "Police", "Nobody in range.", "error")
         end
+    else
+        TriggerServerEvent('B1-Police:AttachPlayer', id, state)
     end
 end)
 
-RegisterNetEvent('B1-Police:DoAnim', function(id, state)
+RegisterNetEvent('B1-Police:DoAnim', function(state, carryid)
     if InAnim then
+        CarriedId = nil
         ClearPedTasks(PlayerPedId())
         IsEscorting = false
         IsCarrying = false
         IsDragging = false
         InAnim = false
     elseif state == 'escort' then
+        CarriedId = carryid
         IsEscorting = true
         InAnim = true
-        LoadAnimDict('amb@world_human_drinking@coffee@male@base')
+        LoadDict('amb@world_human_drinking@coffee@male@base')
         if IsEntityPlayingAnim(PlayerPedId(), 'amb@world_human_drinking@coffee@male@base','base', 3) ~= 1 then
             TaskPlayAnim(PlayerPedId(), 'amb@world_human_drinking@coffee@male@base','base' ,8.0, -8, -1, 51, 0, false, false, false)
         end
     elseif state == 'carry' then
+        CarriedId = carryid
         IsCarrying = true
         InAnim = true
-        LoadAnimDict('missfinale_c2mcs_1')
+        LoadDict('missfinale_c2mcs_1')
         TaskPlayAnim(PlayerPedId(), 'missfinale_c2mcs_1', "fin_c2_mcs_1_camman", 8.0, -8.0, 100000, 49, 0, false, false, false)
     elseif state == 'drag' then
+        CarriedId = carryid
         IsDragging = true
         InAnim = true
     end
 end)
 
-RegisterNetEvent('B1-Police:GetCarried', function(state, sourcePed)
+RegisterNetEvent('B1-Police:GetCarried', function(state, source)
+    local playerIdx = GetPlayerFromServerId(source)
+    local ped = GetPlayerPed(playerIdx)
     if IsAttached then
         IsAttached = false
         DetachEntity(PlayerPedId())
@@ -849,17 +961,17 @@ RegisterNetEvent('B1-Police:GetCarried', function(state, sourcePed)
         if state == 'escort' then
             ClearPedTasks(PlayerPedId())
             IsAttached = true
-            LoadAnimDict('mp_arresting')
-            LoadAnimDict('move_m@generic_variations@walk')
+            LoadDict('mp_arresting')
+            LoadDict('move_m@generic_variations@walk')
             TaskPlayAnim(PlayerPedId(), 'mp_arresting', 'idle', 8.0, -8, -1, 49, 0.0, false, false, false)
-            AttachEntityToEntity(PlayerPedId(), sourcePed, 1816,0.25, 0.49, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
-            amBeingEscorted()
+            AttachEntityToEntity(PlayerPedId(), ped, 1816,0.25, 0.49, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+            BeingEscorted()
         elseif state == 'carry' then
             ClearPedTasks(PlayerPedId())
             IsAttached = true
-            LoadAnimDict('nm')
+            LoadDict('nm')
             TaskPlayAnim(PlayerPedId(), 'nm', 'firemans_carry', 8.0, -8.0, 100000, 33, 0, false, false, false)
-            AttachEntityToEntity(PlayerPedId(), sourcePed, 0, 0.27, 0.15, 0.63, 0.5, 0.5, 180, false, false, false, false, 2, false)
+            AttachEntityToEntity(PlayerPedId(), ped, 0, 0.27, 0.15, 0.63, 0.5, 0.5, 180, false, false, false, false, 2, false)
         elseif state == 'drag' then
             ClearPedTasks(PlayerPedId())
             IsAttached = true
@@ -868,11 +980,67 @@ RegisterNetEvent('B1-Police:GetCarried', function(state, sourcePed)
     end
 end)
 
+Citizen.CreateThread(
+    function()
+        while true do
+            Citizen.Wait(5)
+            if IsAttached then
+                TriggerEvent('B1-Police:Notify', "General", "Cant tackle while being carried.", "error")
+            else
+                local speed = GetEntitySpeed(PlayerPedId())
+                if speed > 3 and IsControlJustReleased(1, Config.TackleKeybind) then
+                    if IsPedInAnyVehicle(PlayerPedId(), false) then
+
+                    else
+                        local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+                        if closestPlayer ~= -1 and closestDistance <= 1.8 then
+                            Coords = GetEntityCoords(PlayerPedId())
+                            local id = GetPlayerServerId(closestPlayer)
+                            TriggerServerEvent('B1-Police:TacklePlayerSV', id)
+                        else
+                            TriggerEvent('B1-Police:Notify', "Police", "Nobody in range.", "error")
+                        end                    
+                    end
+                end
+            end
+        end
+    end
+)
+
+RegisterNetEvent('B1-Police:TacklePlayerCL', function()
+    ClearPedTasks(PlayerPedId())
+    Wait(10)
+    SetPedToRagdoll(PlayerPedId(), Config.TackleCopTime, Config.TackleCopTime, 0, 0, 0, 0)
+end)
+
+RegisterNetEvent('B1-Police:GetTackled', function(state)
+    if state == 'carried' then
+        IsAttached = false
+        DetachEntity(PlayerPedId())
+        ClearPedTasks(PlayerPedId())
+        Wait(10)
+        SetPedToRagdoll(PlayerPedId(), Config.TackleCarriedTime, Config.TackleCarriedTime, 0, 0, 0, 0)
+    else
+        if CarriedId == nil then
+            ClearPedTasks(PlayerPedId())
+            Wait(10)
+            SetPedToRagdoll(PlayerPedId(), Config.TackleCrimTime, Config.TackleCrimTime, 0, 0, 0, 0)
+        else
+            state = 'carried'
+            TriggerServerEvent('B1-Police:TacklePlayerSV', CarriedId, state)
+            InAnim = false
+            ClearPedTasks(PlayerPedId())
+            Wait(100)
+            SetPedToRagdoll(PlayerPedId(), Config.TackleCrimTime, Config.TackleCrimTime, 0, 0, 0, 0)
+        end
+    end
+end)
+
 -- //ANCHOR - Robbing and Searching Logic
 
 RegisterNetEvent('B1-Police:OpenInv', function(id)
     local PlayerData = ESX.GetPlayerData()
-    if PlayerData.job == Config.PDJobs then
+    if PlayerData.job.name == Config.PDJobs then
         exports.ox_inventory:openInventory('player', id)
     else
         TriggerServerEvent('B1-Police:Freeze', id, true)
@@ -928,8 +1096,33 @@ RegisterCommand('testdata', function()
     print(dumpedTable)
 end)
 
+RegisterCommand('testvar', function()
+    print(InAnim)
+end)
+
 RegisterCommand('loc', function()
     local loc = GetEntityCoords(PlayerPedId())
     local heading = GetEntityHeading(PlayerPedId())
     print(loc..heading)
 end)
+
+RegisterCommand('custom', function()
+    local config = {
+      ped = true,
+      headBlend = true,
+      faceFeatures = true,
+      headOverlays = true,
+      components = true,
+      props = true,
+      allowExit = true,
+      tattoos = true
+    }
+  
+    exports['illenium-appearance']:startPlayerCustomization(function (appearance)
+      if (appearance) then
+        print('Saved')
+      else
+        print('Canceled')
+      end
+    end, config)
+  end, false)

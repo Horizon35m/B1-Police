@@ -4,22 +4,42 @@ Config.EmoteResource = 'native' -- native, this is where you set you animation r
 
 Config.Notify = 'ox' -- Notify method ox for ox_lib TODO ADD MORE
 
-Config.EnableMenu = true -- Enables PD action menu
+Config.ClothingExport = "illenium-appearance:client:openClothingShopMenu"
 
-Config.EnableRadial = true -- Enables Premade radials
+Config.EnableMenu = true -- Enables PD action menu
 
 Config.PDJobs = { -- The jobs that have access to PD functions
     'police',
 }
 
+Config.CallsignGroups = { -- The groups that have access to callsign functions
+    'police',
+    'ambulance'
+}
 
-Config.EnableCuffKeys = true -- Enables Handcuff keybinds
 
 Config.MaxCuffBreaks = 4
 
-Config.SoftCuffKey = '->'
+Config.TackleCopTime = 1500 -- Time Tackler is on the ground.
 
-Config.HardCuffKey = '<-'
+Config.TackleCrimTime = 5000 --Time Tackled Person is on the ground.
+
+Config.TackleCarriedTime = 3000 --Time Carried person is on the ground.
+
+Config.TackleKeybind = 74 -- https://docs.fivem.net/docs/game-references/controls/#controls for id
+
+Config.Cloakroomloc = {
+    LSHP = {
+        label = 'Cloakroom',
+        coords = vec3(1537.3, 809.15, 77.65),
+        size = vec3(3.2, 0.6, 1.95),
+        rotation = 330.25,
+        groups = {
+            'police'
+        },
+        debug = true,
+    },
+}
 
 Config.SecurityCams = {
     {

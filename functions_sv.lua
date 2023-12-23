@@ -6,12 +6,51 @@ end)
 
 -- //ANCHOR - Commands
 
+lib.addCommand('resetwaypoint', {
+    help = 'Resets Waypoint to Previous!',
+    params = {},
+    -- restricted = 'group.admin'
+}, function(source, args, raw)
+    TriggerClientEvent('B1-Police:ResetWaypoint', source)
+end)
+
+lib.addCommand('resetwaypointoption', {
+    help = 'Resets Waypoint agreement to Show!',
+    params = {},
+    -- restricted = 'group.admin'
+}, function(source, args, raw)
+    TriggerClientEvent('B1-Police:ResetWaypoint', source)
+end)
+
+lib.addCommand('savewaypoint', {
+    help = 'Saves Current Waypoint.',
+    params = {},
+    -- restricted = 'group.admin'
+}, function(source, args, raw)
+    TriggerClientEvent('B1-Police:SaveWaypoint', source)
+end)
+
 lib.addCommand('cam', {
     help = 'Opens Camera Menu',
     params = {},
     -- restricted = 'group.admin'
 }, function(source, args, raw)
     TriggerClientEvent('B1-Police:CameraOpen', source)
+end)
+
+lib.addCommand('callsign', {
+    help = 'Changes callsign',
+    params = {
+        {
+            name = 'callsign',
+            type = 'number',
+            help = 'Number for new callsign.',
+            optional = false,
+        },
+    },
+    restricted = Config.CallsignGroups
+}, function(source, args, raw)
+    TriggerEvent('B1-Police:updateCallsign', args.callsign, source)
 end)
 
 lib.addCommand('frisk', {
@@ -34,9 +73,40 @@ lib.addCommand('cuff', {
     },
     -- restricted = 'group.admin'
 }, function(source, args, raw)
-    local id = nil
     local cuff = 'cuff'
-    TriggerClientEvent('B1-Police:CuffPlayercl', source, id, args.cuff, cuff)
+    TriggerClientEvent('B1-Police:CuffPlayercl', source, nil, args.cuff, cuff)
+end)
+
+lib.addCommand('pdmenu', {
+    help = 'Opens PD Menu',
+    restricted = 'group.police'
+}, function(source, args, raw)
+    TriggerClientEvent('B1-Police:JobMenu', source)
+end)
+
+
+lib.addCommand('escort', {
+    help = 'Escort nearest player',
+    restricted = 'group.police'
+}, function(source, args, raw)
+    local state = 'escort'
+    TriggerClientEvent('B1-Police:CarryPlayerCL', source, nil, state)
+end)
+
+lib.addCommand('drag', {
+    help = 'Escort nearest player',
+    restricted = 'group.ambulance'
+}, function(source, args, raw)
+    local state = 'drag'
+    TriggerClientEvent('B1-Police:CarryPlayerCL', source, nil, state)
+end)
+
+lib.addCommand('carry', {
+    help = 'Escort nearest player',
+    restricted = 'group.police'
+}, function(source, args, raw)
+    local state = 'carry'
+    TriggerClientEvent('B1-Police:CarryPlayerCL', source, nil, state)
 end)
 
 lib.addCommand('ziptie', {
@@ -51,9 +121,8 @@ lib.addCommand('ziptie', {
     },
     -- restricted = 'group.admin'
 }, function(source, args, raw)
-    local id = nil
     local cuff = 'zip'
-    TriggerClientEvent('B1-Police:CuffPlayercl', source, id, args.cuff, cuff)
+    TriggerClientEvent('B1-Police:CuffPlayercl', source, nil, args.cuff, cuff)
 end)
 
 -- //ANCHOR - Notify Net
@@ -195,9 +264,6 @@ end)
 -- //ANCHOR - MugShot Logic
 
 RegisterNetEvent("B1-Police:TakeMugshotSV", function(location, suspect, policeNotes)
-    print(location..'SV')
-    print(suspect..'SV')
-    print(policeNotes..'SV')
     if suspect == nil then
         TriggerClientEvent('B1-Police:Notify', source, 'Police', 'Nobody selected!', 'error')
     else
@@ -206,7 +272,6 @@ RegisterNetEvent("B1-Police:TakeMugshotSV", function(location, suspect, policeNo
 end)
 
 RegisterNetEvent("B1-Police:MugLog", function(officer, MugShot, policeNotes)
-    print('mug')
     local Suspect = ESX.GetPlayerFromId(source)
     local Police =  ESX.GetPlayerFromId(officer)
     local suspectName = Suspect.variables.firstName .. ' ' .. Suspect.variables.lastName
@@ -264,11 +329,95 @@ RegisterNetEvent('B1-Police:Freeze', function(id, state)
     end
 end)
 
-RegisterNetEvent('B1-Police:AttachPlayer', function(id, state)
-    local sourcePed = GetPlayerPed(source)
-    TriggerClientEvent('B1-Police:DoAnim', source, state)
-    TriggerClientEvent('B1-Police:GetCarried', id, state, sourcePed)
+-- //ANCHOR - Dispatch Logic
+
+function updateCallsign(identifier, callsign)
+	local callSign = MySQL.update.await('UPDATE users SET callsign = @callsign WHERE identifier = @identifier', {
+		['@identifier'] = identifier,
+        ['@callsign'] = callsign
+	})
+end
+
+
+function getCallSign(identifier)
+    local callsign = nil
+	local callSign = MySQL.single.await('SELECT callsign FROM users WHERE identifier = @identifier', {
+		['@identifier'] = identifier
+	})
+    if callSign.callsign == nil then 
+        callsign = 0
+    else
+        callsign = callSign.callsign
+    end
+	return callsign
+end
+
+RegisterNetEvent('B1-Police:updateCallsign', function(callsign, source)
+    local PlayerData = ESX.GetPlayerFromId(source)
+    local callSign = updateCallsign(PlayerData.identifier, callsign)
+    TriggerClientEvent('B1-Police:Notify', source, 'Dispatch', 'Callsign updated to '..callsign..'!')
 end)
+
+ESX.RegisterServerCallback('B1-Police:DispatchGetActive',function(source, cb, job)
+	local activePD = {}
+	local xPlayers = ESX.GetExtendedPlayers('job', job)
+	for _, xPlayer in pairs(xPlayers) do
+		local name = xPlayer.getName()
+		local callsign = getCallSign(xPlayer.identifier)
+		local grade = xPlayer.job.grade
+        if callsign == '(NULL)' then
+            callsign = 0
+        end
+		activePD[#activePD+1] = {name = name, callsign = callsign, grade = grade, id = xPlayer.source}
+	end
+	cb(activePD,ESX.GetJobs())
+end)
+
+ESX.RegisterServerCallback('B1-Police:DispatchGetMass',function(source, cb, job)
+    local players = {}
+	local xPlayers = ESX.GetExtendedPlayers('job', job)
+	for _, xPlayer in pairs(xPlayers) do
+        table.insert(players, {
+            id = xPlayer.source
+        })
+	end
+	cb(players)
+end)
+
+lib.callback.register('B1-Police:DispatchGetJobs', function(source)
+    local Job = ESX.GetJobs()
+    return Job
+end)
+
+RegisterServerEvent('B1-Police:SendWaypointSV',function(id, thing, job, coords)
+    if thing == 'single' then
+	    TriggerClientEvent('B1-Police:GetNewWaypoint', id, coords)
+    elseif thing == 'mass' then
+        local xPlayers = ESX.GetExtendedPlayers('job', job)
+        for _, xPlayer in pairs(xPlayers) do
+            TriggerClientEvent('B1-Police:GetNewWaypoint', xPlayer.source, coords)
+        end
+    else
+        TriggerClientEvent('B1-Police:Notify', source, 'General', 'thing not sent!', 'error')
+    end
+end)
+
+RegisterNetEvent('B1-Police:AttachPlayer', function(id, state)
+    TriggerClientEvent('B1-Police:DoAnim', source, state, id)
+    TriggerClientEvent('B1-Police:GetCarried', id, state, source)
+end)
+
+RegisterNetEvent('B1-Police:TacklePlayerSV', function(id, state)
+    print(state)
+    if state == nil then
+        TriggerClientEvent('B1-Police:TacklePlayerCL', source)
+        TriggerClientEvent('B1-Police:GetTackled', id, state)
+    elseif state == 'carried' then
+        print('bye')
+        TriggerClientEvent('B1-Police:GetTackled', id, state)
+    end
+end)
+
 
 RegisterCommand('testdatasv', function(source)
     local PlayerData = ESX.GetPlayerFromId(source)

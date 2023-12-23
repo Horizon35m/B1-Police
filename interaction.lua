@@ -14,7 +14,17 @@ exports.ox_target:addGlobalPlayer({
       local NetworkPlayer = NetworkGetPlayerIndexFromPed(data.entity)
       local ServerId = GetPlayerServerId(NetworkPlayer)
       local target = ServerId
-      print(target)
+      TriggerEvent('B1-Police:OpenInv', target)
+    end,
+  },
+  {
+    label = "Rob Person",
+    icon = 'fa-solid fa-user-secret',
+    distance = 1.5,
+    onSelect = function(data)
+      local NetworkPlayer = NetworkGetPlayerIndexFromPed(data.entity)
+      local ServerId = GetPlayerServerId(NetworkPlayer)
+      local target = ServerId
       exports.ox_inventory:openInventory('player', target)
     end,
   },
@@ -138,6 +148,44 @@ exports.ox_target:addGlobalPlayer({
       TriggerEvent('B1-Police:UnCuff', target, item)
     end,
   },
+  {
+    label = "Escort Player",
+    icon = 'fa-solid fa-handcuffs',
+    groups = 'police',
+    distance = 1.5,
+    onSelect = function(data)
+      local NetworkPlayer = NetworkGetPlayerIndexFromPed(data.entity)
+      local ServerId = GetPlayerServerId(NetworkPlayer)
+      local target = ServerId
+      local state = 'escort'
+      TriggerEvent('B1-Police:CarryPlayerCL', target, state)
+    end,
+  },
+  {
+    label = "Drag Player",
+    icon = 'fa-solid fa-truck-medical',
+    groups = 'ambulance',
+    distance = 1.5,
+    onSelect = function(data)
+      local NetworkPlayer = NetworkGetPlayerIndexFromPed(data.entity)
+      local ServerId = GetPlayerServerId(NetworkPlayer)
+      local target = ServerId
+      local state = 'drag'
+      TriggerEvent('B1-Police:CarryPlayerCL', target, state)
+    end,
+  },
+  {
+    label = "Carry Player",
+    icon = 'fa-solid fa-hands-holding',
+    distance = 1.5,
+    onSelect = function(data)
+      local NetworkPlayer = NetworkGetPlayerIndexFromPed(data.entity)
+      local ServerId = GetPlayerServerId(NetworkPlayer)
+      local target = ServerId
+      local state = 'carry'
+      TriggerEvent('B1-Police:CarryPlayerCL', target, state)
+    end,
+  },
 })
 
 -- //ANCHOR - Global Vehicles 
@@ -165,6 +213,93 @@ exports.ox_target:addGlobalPlayer({
 --   },
 -- })
 
+-- //ANCHOR - Dispatch targets
+
+local keyboards = {
+  -- MRPD
+    {
+        coords = vec3(448.3, -999.45, 34.9),
+        radius = 0.2,
+        debug = true,
+    },
+    {
+        coords = vec3(446.05, -999.4, 34.9),
+        radius = 0.2,
+        debug = true,
+    },
+    {
+        coords = vec3(444.05, -999.6, 34.9),
+        radius = 0.2,
+        debug = true,
+    },
+    {
+        coords = vec3(441.55, -999.5, 34.9),
+        radius = 0.2,
+        debug = true,
+    },
+    {
+        coords = vec3(440.65, -996.0, 34.85),
+        radius = 0.2,
+        debug = true,
+    },
+    {
+        coords = vec3(443.95, -996.0, 34.9),
+        radius = 0.2,
+        debug = true,
+    },
+  -- Highway Patrol
+    {
+      coords = vec3(1545.3, 825.5, 77.5),
+      radius = 0.25,
+      debug = true,
+    },
+    {
+      coords = vec3(1546.25, 827.2, 77.5),
+      radius = 0.25,
+      debug = true,
+    },
+    {
+      coords = vec3(1547.3, 829.0, 77.5),
+      radius = 0.25,
+      debug = true,
+    },
+    {
+      coords = vec3(1543.95, 830.95, 77.5),
+      radius = 0.25,
+      debug = true,
+    },
+    {
+      coords = vec3(1542.9, 829.15, 77.5),
+      radius = 0.25,
+      debug = true,
+    },
+    {
+      coords = vec3(1541.9, 827.45, 77.5),
+      radius = 0.25,
+      debug = true,
+    },
+}
+
+for _, v in pairs(keyboards) do
+    exports.ox_target:addSphereZone({
+        coords = v.coords,
+        radius = v.radius,
+        debug = v.debug,
+        groups = {
+            'police',
+            'dispatch'
+        },
+        options = {
+            {
+                label = "Dispatch Control",
+                icon = 'fa-solid fa-headset',
+                distance = 3,
+                event = 'B1-Police:DispatchOpen',
+            },
+        }
+    })
+end
+
 -- //ANCHOR - Mugshot Target
 
 for _,v in pairs(Config.Mugshotsloc) do
@@ -183,10 +318,35 @@ for _,v in pairs(Config.Mugshotsloc) do
             distance = 2,
             onSelect = function()
               local location = tostring(_)
-              print(location)
               TriggerEvent('B1-Police:FillBoard', location)
             end
         },
+    }
+  })
+end
+
+for _,v in pairs(Config.Cloakroomloc) do
+  exports.ox_target:addBoxZone({
+    coords = v.coords,
+    size = v.size,
+    rotation = v.rotation,
+    debug = v.debug,
+    groups = v.groups,
+    options = {
+      {
+          icon = "fa-solid fa-shirt",
+          label = v.label,
+          distance = 2,
+          event = Config.ClothingExport
+      },
+      {
+          icon = "fa-solid fa-box-archive",
+          label = "Personal Locker",
+          distance = 2,
+          onSelect = function()
+            ox_inventory:openInventory('stash', 'policelocker')
+          end
+      },
     }
   })
 end
