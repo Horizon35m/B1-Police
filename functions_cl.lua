@@ -865,14 +865,14 @@ RegisterNetEvent('B1-Police:PutinCarCL', function(id, veh)
     end
 end)
 
-RegisterNetEvent('B1-Police:GetinCar', function()
+RegisterNetEvent('B1-Police:GetinCar', function(veh)
     local playerPed = PlayerPedId()
     local playerCoords = GetEntityCoords(PlayerPedId())
-    local vehicle, vehicleCoords = lib.getClosestVehicle(playerCoords, 3, false)
+    local vehicle = veh
     if not vehicle then
         lib.notify({
-            title = 'Seats',
-            description = 'No free seats!',
+            title = 'General',
+            description = 'No Vehicle',
             type = 'error'
         })
     end
@@ -884,12 +884,18 @@ RegisterNetEvent('B1-Police:GetinCar', function()
         end
     end
     if freeSeat then
-        TaskWarpPedIntoVehicle(playerPed, vehicle, freeSeat)
-        player.isDragged = false
+        if IsAttached then
+            IsAttached = false
+            DetachEntity(PlayerPedId())
+            ClearPedTasks(PlayerPedId())
+            TaskWarpPedIntoVehicle(playerPed, vehicle, freeSeat)
+        else
+            TaskWarpPedIntoVehicle(playerPed, vehicle, freeSeat)
+        end
     end
 end)
 
-RegisterNetEvent('B1-Police:TakeoutCar', function()
+RegisterNetEvent('B1-Police:TakeoutCar', function(veh)
     local coords = GetEntityCoords(PlayerPedId())
     local target = lib.getClosestPlayer(coords, 3, false)
     if not target then return end

@@ -190,28 +190,32 @@ exports.ox_target:addGlobalPlayer({
 
 -- //ANCHOR - Global Vehicles 
 
--- exports.ox_target:addGlobalVehicle({
---   {
---     label = "Place in Car",
---     icon = 'fa-solid fa-hand',
---     groups = {'police','ambulance'},
---     distance = 1.5,
---     onSelect = function(data)
---       veh = data.entity
---       TriggerEvent('gl-police:putincar', veh)
---     end,
---   },
---   {
---     label = "Take out of Car",
---     icon = 'fa-solid fa-hand',
---     groups = {'police','ambulance'},
---     distance = 1.5,
---     onSelect = function(data)
---       veh = data.entity
---       TriggerEvent('gl-police:takeoutcar', veh)
---     end,
---   },
--- })
+exports.ox_target:addGlobalVehicle({
+  {
+    label = "Place in Car",
+    icon = 'fa-solid fa-hand',
+    groups = {'police','ambulance'},
+    distance = 1.5,
+    onSelect = function(data)
+      veh = data.entity
+      TriggerEvent('B1-Police:PutinCarCL', nil, veh)
+    end,
+  },
+  {
+    label = "Take out of Car",
+    icon = 'fa-solid fa-hand',
+    groups = {'police','ambulance'},
+    distance = 1.5,
+    onSelect = function(data)
+      local dumpedTable = ESX.DumpTable(data)
+      
+      print(dumpedTable)
+      -- veh = data.entity
+      -- TriggerEvent('gl-police:takeoutcar', nil, veh)
+
+    end,
+  },
+})
 
 -- //ANCHOR - Dispatch targets
 
