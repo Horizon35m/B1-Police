@@ -77,14 +77,6 @@ lib.addCommand('cuff', {
     TriggerClientEvent('B1-Police:CuffPlayercl', source, nil, args.cuff, cuff)
 end)
 
-lib.addCommand('pdmenu', {
-    help = 'Opens PD Menu',
-    restricted = 'group.police'
-}, function(source, args, raw)
-    TriggerClientEvent('B1-Police:JobMenu', source)
-end)
-
-
 lib.addCommand('escort', {
     help = 'Escort nearest player',
     restricted = 'group.police'
@@ -304,15 +296,14 @@ end)
 
 -- //ANCHOR - Put in & Take out Car Logic
 
-RegisterNetEvent('B1-Police:PutinCarSV', function(id, veh)
-    TriggerClientEvent('B1-Police:GetinCar', id, veh)
+RegisterNetEvent('B1-Police:PutinCarSV', function(id)
+    TriggerClientEvent('B1-Police:GetinCar', id)
 end)
 
 RegisterNetEvent('B1-Police:PutoutVehicleSV', function(id)
-    local id = tonumber(id)
     local sourcePed = GetPlayerPed(source)
     local targetPed = GetPlayerPed(id)
-    if target < 1 or #(GetEntityCoords(sourcePed) - GetEntityCoords(targetPed)) > 4.0 then
+    if id < 1 or #(GetEntityCoords(sourcePed) - GetEntityCoords(targetPed)) > 4.0 then
         print(source .. ' probible modder')
     else
         TriggerClientEvent('B1-Police:PutoutVehicleCl', id)

@@ -4,9 +4,9 @@ Config.EmoteResource = 'native' -- native, this is where you set you animation r
 
 Config.Notify = 'ox' -- Notify method ox for ox_lib TODO ADD MORE
 
-Config.ClothingExport = "illenium-appearance:client:openClothingShopMenu"
+Config.DefaultCuffType = 'hc' -- "hc" for hard cuff, "sc" for soft cuff
 
-Config.EnableMenu = true -- Enables PD action menu
+Config.ClothingExport = "illenium-appearance:client:openClothingShopMenu"
 
 Config.PDJobs = { -- The jobs that have access to PD functions
     'police',
@@ -26,17 +26,25 @@ Config.TackleCrimTime = 5000 --Time Tackled Person is on the ground.
 
 Config.TackleCarriedTime = 3000 --Time Carried person is on the ground.
 
-Config.TackleKeybind = 74 -- https://docs.fivem.net/docs/game-references/controls/#controls for id
+Config.TackleKeybind = 74 -- https://docs.fivem.net/docs/game-references/controls/#controls 74 = H
 
 Config.Cloakroomloc = {
     LSHP = {
         label = 'Cloakroom',
-        coords = vec3(1537.3, 809.15, 77.65),
-        size = vec3(3.2, 0.6, 1.95),
-        rotation = 330.25,
+        coords = vec3(457.75, -987.65, 31.0),
+        size = vec3(5.5, 0.35, 2.0),
+        rotation = 0.0,
         groups = {
             'police'
         },
+        debug = true,
+    },
+}
+
+Config.DispatchLocations = {
+    {
+        coords = vec3(460.4, -988.9, 24.8),
+        radius = 0.3,
         debug = true,
     },
 }

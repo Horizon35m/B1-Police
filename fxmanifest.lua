@@ -9,8 +9,6 @@ lua54 "yes"
 
 client_scripts {
     'functions_cl.lua',
-    'menu.lua',
-    'interaction.lua'
 }
 
 server_scripts {
