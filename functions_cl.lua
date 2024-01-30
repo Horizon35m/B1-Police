@@ -32,6 +32,7 @@ local savedWaypoint = nil
 
 -- //ANCHOR - Client Callbacks
 
+
 lib.callback.register('B1-Police:GetItems', function()
     local guns
     for _,v in pairs(Config.Guns) do
@@ -760,7 +761,7 @@ RegisterNetEvent("B1-Police:TakeMugshotCL", function(officer, location, policeNo
 	local SuspectCoods = GetEntityCoords(PlayerPed)
     local mug = Config.Mugshotsloc[location].mugshot.pos
     local distance = Vdist(mug.x, mug.y, mug.z, SuspectCoods.x, SuspectCoods.y, SuspectCoods.z)
-    if distance < 3 then
+    if distance < 20 then
         InMugshot = true
         local PlayerData = ESX.GetPlayerData()
         local Name = PlayerData.firstName.. " ".. PlayerData.lastName
